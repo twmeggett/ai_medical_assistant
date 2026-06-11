@@ -1,0 +1,14 @@
+[
+{
+    "user_id": "1",
+    "query_text": "How much wood?",
+    "session_id": "1",
+    "timestamp": "2026-06-11T10:36:31.130802"
+},
+{
+    "user_id": "2",
+    "query_text": "How much wood, again?",
+    "session_id": "2",
+    "timestamp": "2026-06-11T10:38:49.662039"
+}
+]

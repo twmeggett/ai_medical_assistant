@@ -1,8 +1,0 @@
-import aiofiles
-import json
-from models import MedicalQuery
-
-async def filter_by_user(user_id: str) -> list[MedicalQuery]:
-    async with aiofiles.open('medical_queries', mode='r') as f:
-        queries = json.loads(await f.read())
-    return [q for q in queries if q.user_id == user_id]

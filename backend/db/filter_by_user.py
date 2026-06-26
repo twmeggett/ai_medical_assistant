@@ -10,5 +10,6 @@ async def filter_by_user(user_id: str) -> list[MedicalQuery] | None:
         async with aiofiles.open('medical_queries.json', mode='r', encoding='utf-8') as f:
             queries = json.loads(await f.read())
         return [q for q in queries if q['user_id'] == user_id]
-    except Exception as E:
+    except Exception as e:
         logger.exception('Error retrieving the user queries')
+        return None

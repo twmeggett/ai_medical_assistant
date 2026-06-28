@@ -6,6 +6,7 @@ from backend.utils.chat_helpers import add_user_message
 from backend.services.conversation import run_conversation
 from backend.services.streams import ai_med_assist_chat_stream
 from backend.prompts.user import ACTIVE_MED_CHAT_USER_PROMPT
+from backend.db import get_pool, get_full_conversation
 
 class ChatRequest(BaseModel):
     message: str

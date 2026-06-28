@@ -1,9 +1,10 @@
+import asyncpg
 from typing import AsyncGenerator
 from anthropic.types import MessageParam
 from backend.tools import tool_executor
 from backend.utils.chat_helpers import add_user_message, add_assistant_message, ChatStreamFn
-from backend.models.requests import ToolResultBlock
-
+from backend.models import ToolResultBlock, ChatMessage, ConversationHistory
+from backend.db import create_conversation, save_message
 
 async def run_conversation(messages: list[MessageParam], stream_fn: ChatStreamFn) -> AsyncGenerator[str, None]:
     while True:
@@ -41,3 +42,12 @@ async def run_conversation(messages: list[MessageParam], stream_fn: ChatStreamFn
                 messages = add_user_message(messages, tool_result_blocks)
             else:
                 break
+
+async def start_conversation(pool: asyncpg.Pool, msg: ChatMessage, user_id="1"):
+    conversation = ConversationHistory(user_id=user_id)
+    async with pool.acquire() as conn:
+        async with conn.transaction():
+            await create_conversation(conn, conversation)
+            for msg in conversation.messages:
+                await save_message(conn, conversation.conversation_id, msg)
+

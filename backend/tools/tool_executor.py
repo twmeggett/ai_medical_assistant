@@ -6,7 +6,6 @@ from backend.utils.sanitize import strip_injection_patterns
 def wrap_tool_output(content: str, source: str = "tool") -> str:
     """
     XML wrapper signals to Claude: this is external data, not instructions.
-    Especially important once you add PubMed or pgvector retrieval in Sprint 3.
     """
     sanitized = strip_injection_patterns(content)
     return f"<tool_result source='{source}'>{sanitized}</tool_result>"

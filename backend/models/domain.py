@@ -61,13 +61,6 @@ class ChatMessage(BaseModel):
     cited_dois: list[str] = Field(default_factory=list)
 
 
-class MedicalQuery(BaseModel):
-    user_id: str
-    query_text: str
-    session_id: str
-    timestamp: datetime = Field(default_factory=datetime.now)
-
-
 class ConversationHistory(BaseModel):
     conversation_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     user_id: str

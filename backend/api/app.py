@@ -1,9 +1,21 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .chat import router as chat_router
-from .history import router as history_router
 
-app = FastAPI()
+from backend.db.connector import connect, disconnect
+from .chat import router as chat_router
+from .conversation import router as conversation_router
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await connect()
+    yield
+    await disconnect()
+
+
+app = FastAPI(lifespan=lifespan)
 
 origins = [
     "http://localhost:3000",      # Common React development port
@@ -23,4 +35,4 @@ def home():
     return {"message": "Hello, FastAPI!"}
 
 app.include_router(chat_router, prefix="/chat")
-app.include_router(history_router, prefix="/history")
+app.include_router(conversation_router, prefix="/conversation")

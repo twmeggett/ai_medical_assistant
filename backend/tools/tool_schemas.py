@@ -1,10 +1,10 @@
 search_journals_schema = {
     "name": "search_journals",
     "description": (
-        "Search an internal medical literature database for peer-reviewed articles "
-        "relevant to a clinical or research question. Use this when the user asks "
-        "about evidence, studies, guidelines, or current literature on a medical topic. "
-        "Returns a list of articles with title, authors, journal, publication year, and abstract."
+        "Search PubMed for peer-reviewed articles relevant to a clinical or research question. "
+        "Use this when the user asks about evidence, studies, guidelines, or current literature "
+        "on a medical topic. Returns a list of articles with title, authors, journal, "
+        "publication year, abstract, and PubMed ID (PMID)."
     ),
     "input_schema": {
         "type": "object",
@@ -14,9 +14,10 @@ search_journals_schema = {
                 "minLength": 3,
                 "maxLength": 500,
                 "description": (
-                    "A search query to run against the medical literature database. "
-                    "Supports Boolean operators (AND, OR, NOT) and quoted phrases. "
-                    "Example: 'metformin AND \"type 2 diabetes\"'"
+                    "A search query to run against PubMed. Supports Boolean operators "
+                    "(AND, OR, NOT), quoted phrases, field tags (e.g. [MeSH Terms], [Title], "
+                    "[Author]), and MeSH terms. "
+                    "Example: 'metformin AND \"type 2 diabetes\"[MeSH Terms]'"
                 ),
             },
             "max_results": {
@@ -43,22 +44,22 @@ search_journals_schema = {
 get_article_schema = {
     "name": "get_article",
     "description": (
-        "Retrieve the full details of a specific medical article by its DOI. "
-        "Use this when you have a DOI and need the complete article metadata "
+        "Retrieve the full details of a specific PubMed article by its PMID. "
+        "Use this when you have a PMID and need the complete article metadata "
         "including abstract, authors, journal, and publication date."
     ),
     "input_schema": {
         "type": "object",
         "properties": {
-            "doi": {
+            "pmid": {
                 "type": "string",
                 "description": (
-                    "The Digital Object Identifier (DOI) of the article to retrieve. "
-                    "Must start with '10.'. Example: '10.1056/NEJMoa2034577'"
+                    "The PubMed ID (PMID) of the article to retrieve. "
+                    "A numeric string assigned by PubMed. Example: '34567890'"
                 ),
             },
         },
-        "required": ["doi"],
+        "required": ["pmid"],
         "additionalProperties": False,
     },
 }
@@ -66,22 +67,22 @@ get_article_schema = {
 cite_sources_schema = {
     "name": "cite_sources",
     "description": (
-        "Generate formatted citations for a list of articles identified by DOI. "
+        "Generate formatted citations for a list of PubMed articles identified by PMID. "
         "Use this after identifying relevant articles to produce a properly formatted "
         "reference list for the user."
     ),
     "input_schema": {
         "type": "object",
         "properties": {
-            "dois": {
+            "pmids": {
                 "type": "array",
                 "items": {"type": "string"},
                 "minItems": 1,
                 "maxItems": 10,
                 "description": (
-                    "List of DOIs to generate citations for. "
-                    "Each DOI must start with '10.'. "
-                    "Example: ['10.1056/NEJMoa2034577', '10.1001/jama.2021.1395']"
+                    "List of PubMed IDs (PMIDs) to generate citations for. "
+                    "Each PMID is a numeric string assigned by PubMed. "
+                    "Example: ['34567890', '33798342']"
                 ),
             },
             "format": {
@@ -91,7 +92,7 @@ cite_sources_schema = {
                 "description": "Citation format to use. Defaults to APA.",
             },
         },
-        "required": ["dois"],
+        "required": ["pmids"],
         "additionalProperties": False,
     },
 }

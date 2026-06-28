@@ -1,8 +1,6 @@
 import asyncio
 import logging
-from backend.models import MedicalQuery
-from backend.db import save_query, filter_by_user
-from backend.utils import ai_med_assist_chat_stream, add_user_message, text_from_message, run_conversation
+from backend.services.conversation import run_conversation
 
 logging.basicConfig(
     level=logging.DEBUG,

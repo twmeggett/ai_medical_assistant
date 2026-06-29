@@ -35,6 +35,38 @@ async def create_conversation(
         logger.exception("Failed to create conversation %s", conversation.conversation_id)
         raise
 
+async def get_conversations_by_user(
+    conn: asyncpg.Connection | asyncpg.pool.PoolConnectionProxy,
+    user_id: str,
+) -> list[ConversationHistory]:
+    logger.info("Fetching conversations for user %s", user_id)
+
+    try:
+        rows = await conn.fetch(
+            """
+            SELECT conversation_id, user_id, title, created_at, updated_at
+            FROM conversations
+            WHERE user_id = $1
+            ORDER BY updated_at DESC
+            """,
+            user_id,
+        )
+    except asyncpg.PostgresError:
+        logger.exception("Failed to fetch conversations for user %s", user_id)
+        raise
+
+    return [
+        ConversationHistory(
+            conversation_id=str(row["conversation_id"]),
+            user_id=str(row["user_id"]),
+            title=row["title"],
+            created_at=row["created_at"],
+            updated_at=row["updated_at"],
+        )
+        for row in rows
+    ]
+
+
 async def get_full_conversation(
     conn: asyncpg.Connection | asyncpg.pool.PoolConnectionProxy,
     conversation_id: str,

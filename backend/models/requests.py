@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional
+from typing import Literal, Optional
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -15,6 +15,7 @@ class ChatRequest(BaseModel):
 
 
 class ToolResultBlock(BaseModel):
+    type: Literal["tool_result"] = "tool_result"
     tool_use_id: str
     content: str
     is_error: bool = False

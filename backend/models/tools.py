@@ -13,15 +13,8 @@ class SearchJournalsInput(BaseModel):
         return v.strip()
     
 class GetArticleInput(BaseModel):
-    doi: str = Field(..., description="e.g. '10.1056/NEJMoa2034577'")
-
-    @field_validator("doi")
-    @classmethod
-    def doi_must_have_prefix(cls, v: str) -> str:
-        if not v.startswith("10."):
-            raise ValueError(f"Invalid DOI format: {v}")
-        return v.strip()
+    pmid: str = Field(..., description="e.g. '34567890'")
 
 class CiteSourcesInput(BaseModel):
-    dois: list[str] = Field(..., min_length=1, max_length=10)
+    pmids: list[str] = Field(..., min_length=1, max_length=10)
     format: str = Field(default="APA", pattern="^(APA|MLA|Vancouver)$")

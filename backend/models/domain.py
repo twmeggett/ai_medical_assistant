@@ -24,7 +24,8 @@ class Author(BaseModel):
 
 
 class Article(BaseModel):
-    doi: str
+    pmid: str
+    doi: Optional[str] = None
     title: str
     authors: list[Author] = Field(default_factory=list)
     journal: str
@@ -33,13 +34,6 @@ class Article(BaseModel):
     article_type: ArticleType = ArticleType.RESEARCH
     url: Optional[str] = None
     citation_count: Optional[int] = None
-
-    @field_validator("doi")
-    @classmethod
-    def doi_must_have_prefix(cls, v: str) -> str:
-        if not v.startswith("10."):
-            raise ValueError("DOI must start with '10.'")
-        return v
 
 
 class SearchResult(BaseModel):

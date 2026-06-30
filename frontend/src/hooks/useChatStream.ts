@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { consumeStream } from "../utils/consumeStream";
+import { streamChatResponse } from "../api/chat";
 
 export function useChatStream() {
     const [text, setText] = useState('');
@@ -9,17 +9,14 @@ export function useChatStream() {
         setText('');
         setIsStreaming(true);
 
-        for await (
-            const chunk of consumeStream(
-                'http://127.0.0.1:8000/chat/stream',
-                { conversation_id: conversationId, message }
-            )
-        ) {
+        for await (const chunk of streamChatResponse(conversationId, message)) {
             setText(prev => prev + chunk);
         }
 
         setIsStreaming(false);
     }, [])
 
-    return { text, isStreaming, sendMessage };
+    const clearText = () => setText('')
+
+    return { text, isStreaming, sendMessage, clearText };
 }

@@ -5,21 +5,28 @@ export function useConversationHistory(conversationId: string | null) {
     const [history, setHistory] = useState<Record<string, string>[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    async function refresh() {
+        if (!conversationId) return;
+        setIsLoading(true);
+        setError(null);
+        try {
+            const data = await fetchConversation(conversationId);
+            setHistory(data.messages ?? []);
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'Failed to load history');
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
     useEffect(() => {
         if (!conversationId) {
             setHistory([]);
             return;
         }
-
-        setIsLoading(true);
-        setError(null);
-        setHistory([])
-
-        fetchConversation(conversationId)
-            .then(data => setHistory(data.messages ?? []))
-            .catch(err => setError(err.message))
-            .finally(() => setIsLoading(false));
+        refresh();
     }, [conversationId]);
 
-    return { history, isLoading, error };
+    return { history, isLoading, error, refresh };
 }

@@ -46,6 +46,6 @@ async def run_conversation(
                             raw_input=block.input,
                         )
                     )
-                messages = add_user_message(messages, tool_result_blocks)
+                messages = add_user_message(messages, [b.model_dump() for b in tool_result_blocks])
             else:
                 break

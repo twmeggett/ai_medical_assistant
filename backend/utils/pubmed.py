@@ -1,3 +1,4 @@
+import asyncio
 import os
 import xml.etree.ElementTree as ET
 from datetime import datetime
@@ -15,6 +16,20 @@ def _base_params() -> dict:
     if api_key:
         params["api_key"] = api_key
     return params
+
+
+async def _get(url: str, params: dict, max_retries: int = 3) -> httpx.Response:
+    async with httpx.AsyncClient() as client:
+        for attempt in range(max_retries):
+            response = await client.get(url, params=params)
+            if response.status_code == 429:
+                wait = int(response.headers.get("Retry-After", 2 ** (attempt + 1)))
+                await asyncio.sleep(wait)
+                continue
+            response.raise_for_status()
+            return response
+    response.raise_for_status()
+    return response  # unreachable, satisfies type checker
 
 
 async def esearch(
@@ -36,10 +51,7 @@ async def esearch(
     if date_to:
         params["maxdate"] = date_to.replace("-", "/")
 
-    async with httpx.AsyncClient() as client:
-        response = await client.get(f"{ENTREZ_BASE}/esearch.fcgi", params=params)
-        response.raise_for_status()
-
+    response = await _get(f"{ENTREZ_BASE}/esearch.fcgi", params)
     return response.json()["esearchresult"]["idlist"]
 
 
@@ -54,10 +66,7 @@ async def efetch(pmids: list[str]) -> list[Article]:
         "rettype": "abstract",
     }
 
-    async with httpx.AsyncClient() as client:
-        response = await client.get(f"{ENTREZ_BASE}/efetch.fcgi", params=params)
-        response.raise_for_status()
-
+    response = await _get(f"{ENTREZ_BASE}/efetch.fcgi", params)
     root = ET.fromstring(response.text)
     articles = []
     for article_el in root.findall(".//PubmedArticle"):
@@ -74,9 +83,7 @@ async def esummary(pmids: list[str]) -> dict:
         "id": ",".join(pmids),
         "retmode": "json",
     }
-    async with httpx.AsyncClient() as client:
-        response = await client.get(f"{ENTREZ_BASE}/esummary.fcgi", params=params)
-        response.raise_for_status()
+    response = await _get(f"{ENTREZ_BASE}/esummary.fcgi", params)
     return response.json().get("result", {})
 
 

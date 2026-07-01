@@ -67,6 +67,48 @@ async def get_conversations_by_user(
     ]
 
 
+async def update_conversation_title(
+    conn: asyncpg.Connection | asyncpg.pool.PoolConnectionProxy,
+    conversation_id: str,
+    title: str,
+) -> bool:
+    logger.info("Updating title for conversation %s", conversation_id)
+
+    try:
+        result = await conn.execute(
+            """
+            UPDATE conversations
+            SET title = $1, updated_at = NOW()
+            WHERE conversation_id = $2
+            """,
+            title,
+            conversation_id,
+        )
+    except asyncpg.PostgresError:
+        logger.exception("Failed to update title for conversation %s", conversation_id)
+        raise
+
+    return result == "UPDATE 1"
+
+
+async def delete_conversation(
+    conn: asyncpg.Connection | asyncpg.pool.PoolConnectionProxy,
+    conversation_id: str,
+) -> bool:
+    logger.info("Deleting conversation %s", conversation_id)
+
+    try:
+        result = await conn.execute(
+            "DELETE FROM conversations WHERE conversation_id = $1",
+            conversation_id,
+        )
+    except asyncpg.PostgresError:
+        logger.exception("Failed to delete conversation %s", conversation_id)
+        raise
+
+    return result == "DELETE 1"
+
+
 async def get_full_conversation(
     conn: asyncpg.Connection | asyncpg.pool.PoolConnectionProxy,
     conversation_id: str,

@@ -24,3 +24,17 @@ export async function fetchConversation(conversationId: string): Promise<{ messa
     if (!res.ok) throw new Error(`Failed to fetch conversation: ${res.status}`)
     return res.json()
 }
+
+export async function updateConversationTitle(conversationId: string, title: string): Promise<void> {
+    const res = await fetch(`${BASE}/${conversationId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title }),
+    })
+    if (!res.ok) throw new Error(`Failed to update conversation: ${res.status}`)
+}
+
+export async function deleteConversation(conversationId: string): Promise<void> {
+    const res = await fetch(`${BASE}/${conversationId}`, { method: 'DELETE' })
+    if (!res.ok) throw new Error(`Failed to delete conversation: ${res.status}`)
+}

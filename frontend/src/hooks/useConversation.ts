@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useChatStream } from './useChatStream'
 import { useUserConversations } from './useUserConversations'
 import { useConversationHistory } from './useConversationHistory'
-import { createConversation } from '../api/conversations'
+import { createConversation, deleteConversation, updateConversationTitle } from '../api/conversations'
 
 export function useConversation(userId: string | null) {
     // Streaming text and state from the Claude API
@@ -55,6 +55,19 @@ export function useConversation(userId: string | null) {
         }
     }
 
+    async function handleRename(conversationId: string, title: string) {
+        await updateConversationTitle(conversationId, title)
+        refreshConversations()
+    }
+
+    async function handleDelete(conversationId: string) {
+        await deleteConversation(conversationId)
+        if (activeConversationId === conversationId) {
+            setActiveConversationId(null)
+        }
+        refreshConversations()
+    }
+
     // Append the optimistic message to the end of DB history until the re-fetch resolves
     const displayHistory = optimisticMessage
         ? [...history, { role: 'user', content: optimisticMessage }]
@@ -71,5 +84,7 @@ export function useConversation(userId: string | null) {
         history: displayHistory,
         historyLoading,
         handleSend,
+        handleRename,
+        handleDelete,
     }
 }

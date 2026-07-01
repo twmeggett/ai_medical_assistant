@@ -16,6 +16,8 @@ function App() {
     history,
     historyLoading,
     handleSend,
+    handleRename,
+    handleDelete,
   } = useConversation(user?.id ?? null)
 
   return (
@@ -27,6 +29,8 @@ function App() {
         activeConversationId={activeConversationId}
         onSelectConversation={setActiveConversationId}
         onNewConversation={() => setActiveConversationId(null)}
+        onRename={handleRename}
+        onDelete={handleDelete}
       />
       <section className="flex flex-col flex-1 p-6">
         <Chat

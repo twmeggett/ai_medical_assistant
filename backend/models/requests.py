@@ -14,6 +14,14 @@ class ChatRequest(BaseModel):
         return v.strip()
 
 
+class CreateConversationRequest(BaseModel):
+    user_id: str
+
+
+class UpdateConversationRequest(BaseModel):
+    title: str
+
+
 class ToolResultBlock(BaseModel):
     type: Literal["tool_result"] = "tool_result"
     tool_use_id: str

@@ -1,14 +1,10 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
 from backend.db.connector import get_pool
-from backend.db.conversations import create_conversation, get_full_conversation, get_conversations_by_user
+from backend.db.conversations import create_conversation, delete_conversation, get_full_conversation, get_conversations_by_user, update_conversation_title
 from backend.models.domain import ConversationHistory
+from backend.models.requests import CreateConversationRequest, UpdateConversationRequest
 
 router = APIRouter()
-
-
-class CreateConversationRequest(BaseModel):
-    user_id: str
 
 
 @router.post("")
@@ -23,6 +19,29 @@ async def create_conversation_route(body: CreateConversationRequest):
 async def get_user_conversations_route(user_id: str):
     async with get_pool().acquire() as conn:
         return await get_conversations_by_user(conn, user_id)
+
+
+
+@router.patch("/{conversation_id}")
+async def update_conversation_route(conversation_id: str, body: UpdateConversationRequest):
+    async with get_pool().acquire() as conn:
+        updated = await update_conversation_title(conn, conversation_id, body.title)
+
+    if not updated:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    return {"conversation_id": conversation_id, "title": body.title}
+
+
+@router.delete("/{conversation_id}")
+async def delete_conversation_route(conversation_id: str):
+    async with get_pool().acquire() as conn:
+        deleted = await delete_conversation(conn, conversation_id)
+
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    return {"conversation_id": conversation_id}
 
 
 @router.get("/{conversation_id}")

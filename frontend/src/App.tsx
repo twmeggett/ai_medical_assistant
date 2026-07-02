@@ -12,7 +12,8 @@ function App() {
     conversationsLoading,
     conversationsError,
     activeConversationId,
-    setActiveConversationId,
+    selectConversation,
+    newConversation,
     history,
     historyLoading,
     handleSend,
@@ -27,8 +28,8 @@ function App() {
         isLoading={conversationsLoading}
         error={conversationsError}
         activeConversationId={activeConversationId}
-        onSelectConversation={setActiveConversationId}
-        onNewConversation={() => setActiveConversationId(null)}
+        onSelectConversation={selectConversation}
+        onNewConversation={newConversation}
         onRename={handleRename}
         onDelete={handleDelete}
       />

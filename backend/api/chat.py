@@ -2,11 +2,12 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from backend.db.connector import get_pool
-from backend.db.conversations import get_full_conversation
+from backend.db.conversations import get_full_conversation, update_conversation_title
 from backend.db.messages import save_message
 from backend.models.domain import MessageRole
 from backend.services.conversation import run_conversation
 from backend.services.streams import ai_med_assist_chat_stream
+from backend.services.summarize import summarize_query
 from backend.prompts.user import ACTIVE_MED_CHAT_USER_PROMPT
 
 
@@ -25,6 +26,7 @@ async def stream_chat_route(body: ChatRequest):
         if conversation is None:
             raise HTTPException(status_code=404, detail=f"Conversation {body.conversation_id} not found")
 
+        is_first_message = not conversation.messages and conversation.title is None
         user_message = conversation.add_message(MessageRole.USER, body.message)
         await save_message(conn, body.conversation_id, user_message)
 
@@ -39,6 +41,9 @@ async def stream_chat_route(body: ChatRequest):
         assistant_message = conversation.add_message(MessageRole.ASSISTANT, text)
         async with get_pool().acquire() as conn:
             await save_message(conn, body.conversation_id, assistant_message)
+            if is_first_message:
+                title = await summarize_query(body.message)
+                await update_conversation_title(conn, body.conversation_id, title)
 
     return StreamingResponse(
         run_conversation(messages, ai_med_assist_chat_stream, on_assistant_message=save_assistant_message),

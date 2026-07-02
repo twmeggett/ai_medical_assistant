@@ -1,4 +1,5 @@
 import type { Conversation } from '../hooks/useUserConversations'
+import type { Message } from '../types'
 
 const BASE = 'http://127.0.0.1:8000/conversation'
 
@@ -19,7 +20,7 @@ export async function fetchUserConversations(userId: string): Promise<Conversati
     return res.json()
 }
 
-export async function fetchConversation(conversationId: string): Promise<{ messages: Record<string, string>[] }> {
+export async function fetchConversation(conversationId: string): Promise<{ messages: Message[] }> {
     const res = await fetch(`${BASE}/${conversationId}`)
     if (!res.ok) throw new Error(`Failed to fetch conversation: ${res.status}`)
     return res.json()

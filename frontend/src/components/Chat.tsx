@@ -36,12 +36,15 @@ function Chat({ text, isStreaming, onSend, history, historyLoading }: ChatProps)
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
         {historyLoading && <p className="text-sm text-gray-400">Loading...</p>}
         {history.map((msg, i) => (
-          <p key={i} className={`text-sm px-3 py-2 rounded-lg w-fit whitespace-pre-wrap ${msg.role === 'user' ? 'self-end bg-gray-700 text-white' : 'self-start text-left'}`}>
+          <p key={i} className={`text-sm px-3 py-2 rounded-lg w-fit max-w-[80%] whitespace-pre-wrap ${msg.role === 'user' ? 'self-end text-left bg-gray-700 text-white' : 'self-start text-left'}`}>
             {msg.content}
           </p>
         ))}
-        {text && <p className="text-sm text-left whitespace-pre-wrap">{text}</p>}
-        {isStreaming && <span className="text-xs text-gray-400">Streaming...</span>}
+        {text && (
+          <p className="animate-fade-in streaming-cursor text-sm self-start text-left px-3 py-2 rounded-lg w-fit whitespace-pre-wrap">
+            {text}
+          </p>
+        )}
         <div ref={bottomRef} />
       </div>
       <div className="relative p-4 pb-6">

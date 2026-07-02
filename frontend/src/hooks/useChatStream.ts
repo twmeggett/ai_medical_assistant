@@ -8,8 +8,7 @@ export function useChatStream() {
     const sendMessage = useCallback(async (
         conversationId: string,
         message: string,
-        onComplete?: (text: string) => void,
-    ) => {
+    ): Promise<string> => {
         setText('');
         setIsStreaming(true);
 
@@ -20,7 +19,7 @@ export function useChatStream() {
         }
 
         setIsStreaming(false);
-        onComplete?.(accumulated);
+        return accumulated;
     }, [])
 
     const clearText = () => setText('')

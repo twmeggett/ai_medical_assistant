@@ -83,8 +83,8 @@ describe('Chat', () => {
     expect(screen.getByText('Loading...')).toBeInTheDocument()
   })
 
-  it('shows Streaming... indicator while isStreaming', () => {
+  it('disables input while isStreaming', () => {
     render(<Chat {...defaultProps} isStreaming={true} />)
-    expect(screen.getByText('Streaming...')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Ask a medical question...')).toBeDisabled()
   })
 })

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { getUser, type User } from '../api/user'
+import { getUser } from '../api/user'
+import type { User } from '../types'
 
 export function useUser() {
     const [user, setUser] = useState<User | null>(null)

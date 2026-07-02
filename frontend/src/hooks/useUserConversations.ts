@@ -1,12 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchUserConversations } from "../api/conversations";
-
-export type Conversation = {
-    conversation_id: string
-    title: string | null
-    created_at: string
-    updated_at: string
-}
+import type { Conversation } from "../types";
 
 export function useUserConversations(userId: string | null) {
     const [conversations, setConversations] = useState<Conversation[]>([]);

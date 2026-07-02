@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import ConversationMenu from './ConversationMenu'
-import type { Conversation } from '../hooks/useUserConversations'
+import type { Conversation } from '../types'
 
 type SidePanelProps = {
     conversations: Conversation[]
@@ -15,7 +15,7 @@ type SidePanelProps = {
 
 function conversationLabel(conversation: Conversation): string {
     if (conversation.title) return conversation.title
-    const date = new Date(conversation.created_at)
+    const date = new Date(conversation.createdAt)
     const formatted = date.toLocaleDateString(undefined, {
         month: 'short', day: 'numeric', year: 'numeric',
         hour: '2-digit', minute: '2-digit',
@@ -28,7 +28,7 @@ function SidePanel({ conversations, isLoading, error, activeConversationId, onSe
     const [editTitle, setEditTitle] = useState('')
 
     function startRename(conversation: Conversation) {
-        setEditingId(conversation.conversation_id)
+        setEditingId(conversation.conversationId)
         setEditTitle(conversationLabel(conversation))
     }
 
@@ -50,29 +50,29 @@ function SidePanel({ conversations, isLoading, error, activeConversationId, onSe
             {error && <p className="text-sm text-red-400">{error}</p>}
             <ul className="flex flex-col gap-1 flex-1">
                 {conversations.map(conversation => (
-                    <li key={conversation.conversation_id} className="group flex items-center justify-between gap-1">
-                        {editingId === conversation.conversation_id ? (
+                    <li key={conversation.conversationId} className="group flex items-center justify-between gap-1">
+                        {editingId === conversation.conversationId ? (
                             <input
                                 autoFocus
                                 value={editTitle}
                                 onChange={e => setEditTitle(e.target.value)}
-                                onBlur={() => commitRename(conversation.conversation_id)}
-                                onKeyDown={e => handleRenameKeyDown(e, conversation.conversation_id)}
+                                onBlur={() => commitRename(conversation.conversationId)}
+                                onKeyDown={e => handleRenameKeyDown(e, conversation.conversationId)}
                                 className="flex-1 text-sm bg-white border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-gray-400"
                             />
                         ) : (
                             <>
                                 <button
-                                    onClick={() => onSelectConversation(conversation.conversation_id)}
+                                    onClick={() => onSelectConversation(conversation.conversationId)}
                                     className={`flex-1 text-left text-sm bg-transparent border-none cursor-pointer p-0 truncate ${
-                                        activeConversationId === conversation.conversation_id ? 'underline' : ''
+                                        activeConversationId === conversation.conversationId ? 'underline' : ''
                                     }`}
                                 >
                                     {conversationLabel(conversation)}
                                 </button>
                                 <ConversationMenu
                                     onRename={() => startRename(conversation)}
-                                    onDelete={() => onDelete(conversation.conversation_id)}
+                                    onDelete={() => onDelete(conversation.conversationId)}
                                 />
                             </>
                         )}

@@ -1,5 +1,4 @@
-import type { Conversation } from '../hooks/useUserConversations'
-import type { Message } from '../types'
+import type { Conversation, Message } from '../types'
 
 const BASE = 'http://127.0.0.1:8000/conversation'
 
@@ -17,7 +16,13 @@ export async function createConversation(userId: string): Promise<string> {
 export async function fetchUserConversations(userId: string): Promise<Conversation[]> {
     const res = await fetch(`${BASE}/user/${userId}`)
     if (!res.ok) throw new Error(`Failed to fetch conversations: ${res.status}`)
-    return res.json()
+    const data = await res.json()
+    return data.map((c: Record<string, string>) => ({
+        conversationId: c.conversation_id,
+        title: c.title ?? null,
+        createdAt: c.created_at,
+        updatedAt: c.updated_at,
+    }))
 }
 
 export async function fetchConversation(conversationId: string): Promise<{ messages: Message[] }> {

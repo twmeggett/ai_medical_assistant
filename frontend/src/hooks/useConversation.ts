@@ -15,7 +15,7 @@ export function useConversation(userId: string | null) {
     // Auto-select the most recently updated conversation on first load
     useEffect(() => {
         if (conversations.length > 0 && !activeConversationId) {
-            selectConversation(conversations[0].conversation_id)
+            selectConversation(conversations[0].conversationId)
         }
     }, [conversations])
 

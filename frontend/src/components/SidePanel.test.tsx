@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import SidePanel from './SidePanel'
-import type { Conversation } from '../hooks/useUserConversations'
+import type { Conversation } from '../types'
 
 const makeConversation = (id: string, overrides: Partial<Conversation> = {}): Conversation => ({
-  conversation_id: id,
+  conversationId: id,
   title: null,
-  created_at: '2024-06-15T10:30:00Z',
-  updated_at: '2024-06-15T10:30:00Z',
+  createdAt: '2024-06-15T10:30:00Z',
+  updatedAt: '2024-06-15T10:30:00Z',
   ...overrides,
 })
 
@@ -18,6 +18,8 @@ const defaultProps = {
   activeConversationId: null,
   onSelectConversation: vi.fn(),
   onNewConversation: vi.fn(),
+  onRename: vi.fn(),
+  onDelete: vi.fn(),
 }
 
 beforeEach(() => {
@@ -83,6 +85,6 @@ describe('SidePanel', () => {
       makeConversation('conv_3', { title: 'Third' }),
     ]
     render(<SidePanel {...defaultProps} conversations={conversations} />)
-    expect(screen.getAllByRole('button').length).toBe(4) // 3 conversations + New Conversation
+    expect(screen.getAllByRole('button').length).toBe(7) // 3 conversations + 3 menu buttons + New Conversation
   })
 })

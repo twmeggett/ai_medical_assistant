@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-
-type Message = Record<string, string>
+import type { Message } from '../types'
 
 type ChatProps = {
   text: string

@@ -2,6 +2,10 @@
 
 A full-stack AI application that gives healthcare professionals evidence-based answers to clinical research questions. Built on Claude's streaming API with an agentic tool loop, real-time PubMed integration, and a persistent conversation layer backed by PostgreSQL.
 
+https://github.com/user-attachments/assets/5b671b12-fa6d-4374-aedd-a8559d582118
+
+*A live query against PubMed — the assistant searches for relevant studies, cites sources, and streams its response in real time.*
+
 ---
 
 ## What this project demonstrates

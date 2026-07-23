@@ -1,6 +1,7 @@
 from __future__ import annotations
-from typing import Literal, Optional
+from typing import Optional
 from pydantic import BaseModel, Field, field_validator
+from datetime import datetime
 
 
 class ChatRequest(BaseModel):
@@ -22,8 +23,26 @@ class UpdateConversationRequest(BaseModel):
     title: str
 
 
-class ToolResultBlock(BaseModel):
-    type: Literal["tool_result"] = "tool_result"
-    tool_use_id: str
-    content: str
-    is_error: bool = False
+class CreateArticleRequest(BaseModel):
+    title: str
+    authors: list[str]
+    journal: str
+    published_at: datetime
+    full_text: str
+
+class CreateArticleChunkRequest(BaseModel):
+    article_id: str
+    chunk_text: str
+    context_text: str
+    embedding: list[float]
+    section: str
+    chunk_index: int
+    token_count: int
+    metadata: str | None = None
+
+    @field_validator("embedding")
+    @classmethod
+    def check_dimensions(cls, v: list[float]) -> list[float]:
+        if len(v) != 1024:
+            raise ValueError(f"Expected 1024 dimensions, got {len(v)}")
+        return v

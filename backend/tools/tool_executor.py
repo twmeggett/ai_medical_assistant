@@ -1,5 +1,5 @@
 from pydantic import ValidationError
-from backend.models.requests import ToolResultBlock
+from backend.models import ToolResultBlock
 from backend.tools.tools import search_journals, get_article, cite_sources
 from backend.utils.sanitize import strip_injection_patterns
 

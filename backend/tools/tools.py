@@ -1,5 +1,5 @@
 from backend.models.tools import SearchJournalsInput, GetArticleInput, CiteSourcesInput
-from backend.models.requests import ToolResultBlock
+from backend.models import ToolResultBlock
 from backend.models.domain import SearchResult
 from backend.utils.pubmed import esearch, efetch, esummary, format_citation
 

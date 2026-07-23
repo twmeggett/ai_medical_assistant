@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Optional
+from typing import Optional, TypedDict
 from pydantic import BaseModel, Field, field_validator
 from anthropic.types import MessageParam
 import uuid
@@ -18,22 +18,27 @@ class ArticleType(str, Enum):
     META_ANALYSIS = "meta_analysis"
 
 
-class Author(BaseModel):
-    name: str
-    affiliation: Optional[str] = None
-
-
 class Article(BaseModel):
-    pmid: str
-    doi: Optional[str] = None
+    article_id: str
     title: str
-    authors: list[Author] = Field(default_factory=list)
+    authors: list[str]
     journal: str
-    published_date: datetime
-    abstract: str
-    article_type: ArticleType = ArticleType.RESEARCH
-    url: Optional[str] = None
-    citation_count: Optional[int] = None
+    published_at: datetime
+    chunk_status: str
+    full_text: str | None = None  # omit by default on list endpoints
+
+
+class ArticleChunk(BaseModel):
+    chunk_id: str
+    article_id: str
+    chunk_text: str
+    context_text: str
+    section: str
+    chunk_index: int
+    token_count: int
+    metadata: dict | None = None
+    embedding: list[float] | None = None  # omitted from search results
+    score: float | None = None            # populated by vector search
 
 
 class SearchResult(BaseModel):

@@ -1,5 +1,11 @@
-from typing import Optional
+from typing import Optional, Literal
 from pydantic import BaseModel, Field, field_validator
+
+class ToolResultBlock(BaseModel):
+    type: Literal["tool_result"] = "tool_result"
+    tool_use_id: str
+    content: str
+    is_error: bool = False
 
 class SearchJournalsInput(BaseModel):
     query: str = Field(..., min_length=3, max_length=500)

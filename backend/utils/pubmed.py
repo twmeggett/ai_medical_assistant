@@ -5,7 +5,7 @@ from datetime import datetime
 
 import httpx
 
-from backend.models.domain import Article, ArticleType, Author
+from backend.models.pubmed import PubMedArticle, PubMedArticleType, PubMedAuthor
 
 ENTREZ_BASE = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
 
@@ -55,7 +55,7 @@ async def esearch(
     return response.json()["esearchresult"]["idlist"]
 
 
-async def efetch(pmids: list[str]) -> list[Article]:
+async def efetch(pmids: list[str]) -> list[PubMedArticle]:
     if not pmids:
         return []
 
@@ -87,7 +87,7 @@ async def esummary(pmids: list[str]) -> dict:
     return response.json().get("result", {})
 
 
-def _parse_article(article_el: ET.Element) -> Article:
+def _parse_article(article_el: ET.Element) -> PubMedArticle:
     citation = article_el.find("MedlineCitation")
     if citation is None:
         raise ValueError("Missing MedlineCitation element")
@@ -118,7 +118,7 @@ def _parse_article(article_el: ET.Element) -> Article:
         affiliation = author_el.findtext(".//Affiliation")
         name = f"{fore} {last}".strip() if fore else last
         if name:
-            authors.append(Author(name=name, affiliation=affiliation))
+            authors.append(PubMedAuthor(name=name, affiliation=affiliation))
 
     doi = None
     for loc_el in article_data.findall("ELocationID"):
@@ -134,16 +134,15 @@ def _parse_article(article_el: ET.Element) -> Article:
     article_type = _parse_article_type(article_data)
     url = f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/"
 
-    return Article(
+    return PubMedArticle(
         pmid=pmid,
         doi=doi,
         title=title,
         authors=authors,
         journal=journal,
-        published_date=published_date,
+        published_at=published_date,
         abstract=abstract,
         article_type=article_type,
-        url=url,
     )
 
 
@@ -174,17 +173,17 @@ def _parse_pub_date(pub_date_el: ET.Element | None) -> datetime:
     return datetime.now()
 
 
-def _parse_article_type(article_data: ET.Element) -> ArticleType:
+def _parse_article_type(article_data: ET.Element) -> PubMedArticleType:
     types = " ".join(
         (t.text or "").lower() for t in article_data.findall(".//PublicationType")
     )
     if "meta-analysis" in types:
-        return ArticleType.META_ANALYSIS
+        return PubMedArticleType.META_ANALYSIS
     if "systematic review" in types or "review" in types:
-        return ArticleType.REVIEW
+        return PubMedArticleType.REVIEW
     if "case report" in types:
-        return ArticleType.CASE_STUDY
-    return ArticleType.RESEARCH
+        return PubMedArticleType.CASE_STUDY
+    return PubMedArticleType.RESEARCH
 
 
 def format_citation(summary: dict, fmt: str) -> str:

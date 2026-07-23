@@ -1,6 +1,6 @@
 import asyncio
 from anthropic import AsyncAnthropic
-from anthropic.types import MessageParam
+from anthropic.types import MessageParam, TextBlockParam
 from anthropic.types.messages.message_batch import MessageBatch
 from anthropic.types.messages.message_batch_individual_response import MessageBatchIndividualResponse
 from anthropic.types.messages.batch_create_params import Request
@@ -8,6 +8,34 @@ from anthropic.types.message_create_params import MessageCreateParamsNonStreamin
 
 client = AsyncAnthropic()
 model = "claude-sonnet-4-5"
+
+
+def build_chunk_context_request(custom_id: str, resource: str, chunk: str, system: str) -> Request:
+    # Caches the system prompt and resource separately so repeated calls for chunks
+    # from the same article share a single cached prefix rather than reprocessing
+    # the full article on every request. Both blocks must be >= 1024 tokens to qualify;
+    # the resource (full article) comfortably meets this threshold.
+    system_block: TextBlockParam = {
+        "type": "text",
+        "text": system,
+        "cache_control": {"type": "ephemeral"},
+    }
+    resource_block: TextBlockParam = {
+        "type": "text",
+        "text": f"<resources>{resource}</resources>",
+        "cache_control": {"type": "ephemeral"},
+    }
+    chunk_block: TextBlockParam = {
+        "type": "text",
+        "text": f"<chunk>{chunk}</chunk>",
+    }
+    params: MessageCreateParamsNonStreaming = {
+        "model": model,
+        "max_tokens": 100,
+        "system": [system_block],
+        "messages": [{"role": "user", "content": [resource_block, chunk_block]}],
+    }
+    return {"custom_id": custom_id, "params": params}
 
 
 def build_request(custom_id: str, messages: list[MessageParam], system: str | None = None) -> Request:

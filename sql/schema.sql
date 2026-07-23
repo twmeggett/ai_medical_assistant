@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS vector;
+
 CREATE TYPE message_role AS ENUM ('user', 'assistant');
 
 CREATE TABLE users (
@@ -32,6 +34,32 @@ CREATE TABLE chat_messages (
 );
 
 CREATE INDEX idx_chat_messages_conversation ON chat_messages (conversation_id, position);
+
+CREATE TABLE articles (
+    article_id      UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
+    full_text       TEXT          NOT NULL,
+    title           TEXT          NOT NULL,
+    authors         TEXT[]        NOT NULL,
+    journal         TEXT          NOT NULL,
+    published_at    TIMESTAMPTZ   NOT NULL,
+    chunk_status    TEXT          NOT NULL DEFAULT 'pending'  -- pending | processing | complete | failed
+);
+
+CREATE TABLE article_chunks (
+    chunk_id        UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
+    article_id      UUID          NOT NULL REFERENCES articles(article_id) ON DELETE CASCADE,
+    chunk_text      TEXT          NOT NULL,
+    context_text    TEXT          NOT NULL,
+    embedding       vector(1024)  NOT NULL,
+    section         TEXT          NOT NULL,
+    chunk_index     INT           NOT NULL,
+    token_count     INT           NOT NULL,
+    metadata        JSONB,
+
+    UNIQUE (article_id, section, chunk_index)
+);
+
+CREATE INDEX idx_article_chunks_embedding_hnsw ON article_chunks USING hnsw (embedding vector_ip_ops);
 
 -- Keep conversations.updated_at in sync whenever a message is added
 CREATE OR REPLACE FUNCTION fn_touch_conversation()

@@ -1,5 +1,6 @@
 import os
 import re
+import hashlib
 from anthropic import AsyncAnthropic
 
 from backend.prompts import ACTIVE_CHUNK_CONTEXT_SYSTEM_PROMPT
@@ -141,3 +142,8 @@ async def create_context_for_chunk(resource: str, chunk: str) -> str:
 
     return response.content[0].text.strip()  # type: ignore[union-attr]
 
+
+def generate_chunk_id(source_id: str, chunk_text: str) -> str:
+    """Generate a unique SHA-256 hash ID based on source and content."""
+    unique_string = f"{source_id}:{chunk_text}"
+    return hashlib.sha256(unique_string.encode("utf-8")).hexdigest()

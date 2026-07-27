@@ -1,47 +1,45 @@
-from typing import Callable, Sequence, TypedDict, TypeVar
-from rank_bm25 import BM25Okapi
-
-T = TypeVar("T")
+from typing import TypedDict
 
 class SearchResult(TypedDict):
-    index: int
+    id: str
     rank: float
-
-
-def bm25_search(
-    items: Sequence[T],
-    text: Callable[[T], str],
-    query: str,
-    top_k: int = 10,
-    min_score: float = 0.0,
-) -> list[SearchResult]:
-    tokenized_corpus = [text(item).lower().split() for item in items]
-    bm25 = BM25Okapi(tokenized_corpus)
-    scores = bm25.get_scores(query.lower().split())
-
-    ranked = sorted(enumerate(scores), key=lambda x: x[1], reverse=True)[:top_k]
-
-    return [
-        SearchResult(index=i, rank=score)
-        for i, score in ranked
-        if score >= min_score
-    ]
 
 
 def reciprocal_rank_fusion(
     result_lists: list[list[SearchResult]],
     k: int = 60,
 ) -> list[SearchResult]:
-    rrf_scores: dict[int, float] = {}
+    rrf_scores: dict[str, float] = {}
 
     for results in result_lists:
         for rank, result in enumerate(results):
-            index = result["index"]
-            rrf_scores[index] = rrf_scores.get(index, 0) + 1.0 / (k + rank + 1)
+            result_id = result["id"]
+            rrf_scores[result_id] = rrf_scores.get(result_id, 0) + 1.0 / (k + rank + 1)
 
-    sorted_indices = sorted(rrf_scores, key=lambda i: rrf_scores[i], reverse=True)
+    sorted_ids = sorted(rrf_scores, key=lambda i: rrf_scores[i], reverse=True)
 
     return [
-        SearchResult(index=index, rank=rrf_scores[index])
-        for index in sorted_indices
+        SearchResult(id=result_id, rank=rrf_scores[result_id])
+        for result_id in sorted_ids
+    ]
+
+
+def normalize_scores(results: list[SearchResult]) -> list[SearchResult]:
+    # Min-max normalization to 0-100: raw RRF scores are tiny and clustered
+    # (typically ~0.01-0.03), which is hard to read at a glance. Rescaling so
+    # the weakest result in the set is 0 and the strongest is 100 turns that
+    # into an intuitive "closeness to best match" percentage. Order-preserving
+    # since it's a positive linear transform.
+    if not results:
+        return results
+
+    scores = [result["rank"] for result in results]
+    lo, hi = min(scores), max(scores)
+
+    if hi == lo:
+        return [SearchResult(id=result["id"], rank=100.0) for result in results]
+
+    return [
+        SearchResult(id=result["id"], rank=(result["rank"] - lo) / (hi - lo) * 100)
+        for result in results
     ]

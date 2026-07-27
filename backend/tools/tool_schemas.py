@@ -1,3 +1,48 @@
+from backend.utils.chunk_helpers import med_article_sections
+from backend.models.tools import DEFAULT_CHUNK_SEARCH_TOP_K
+
+search_article_chunks_schema = {
+    "name": "search_article_chunks",
+    "description": (
+        "Search the internal library of full-text articles that have already been "
+        "ingested and chunked, using hybrid vector + keyword search. Use this to find "
+        "specific passages, methods, or findings within articles already in the system — "
+        "unlike search_journals, this does not query PubMed directly and only covers "
+        "articles that have been ingested."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "query": {
+                "type": "string",
+                "description": "Natural-language search query to run against ingested article chunks.",
+            },
+            "top_k": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 20,
+                "default": DEFAULT_CHUNK_SEARCH_TOP_K,
+                "description": "Maximum number of chunks to return.",
+            },
+            "article_id": {
+                "type": "string",
+                "description": (
+                    "Restrict results to chunks from a specific ingested article, "
+                    "identified by its internal article_id (UUID). Leave unset to "
+                    "search across all ingested articles."
+                ),
+            },
+            "section": {
+                "type": "string",
+                "enum": med_article_sections,
+                "description": "Restrict results to chunks from a specific article section.",
+            },
+        },
+        "required": ["query"],
+        "additionalProperties": False,
+    },
+}
+
 search_journals_schema = {
     "name": "search_journals",
     "description": (
@@ -97,4 +142,4 @@ cite_sources_schema = {
     },
 }
 
-ALL_TOOLS = [search_journals_schema, get_article_schema, cite_sources_schema]
+ALL_TOOLS = [search_article_chunks_schema, search_journals_schema, get_article_schema, cite_sources_schema]

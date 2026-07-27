@@ -13,7 +13,7 @@ from backend.db.connector import connect, disconnect
 from .chat import router as chat_router
 from .conversation import router as conversation_router
 from .message import router as message_router
-from .articles import router as articles_router
+from .article_chunks import router as article_chunks_router
 
 
 @asynccontextmanager
@@ -45,4 +45,4 @@ def home():
 app.include_router(chat_router, prefix="/chat")
 app.include_router(conversation_router, prefix="/conversation")
 app.include_router(message_router, prefix="/message")
-app.include_router(articles_router, prefix="/articles")
+app.include_router(article_chunks_router, prefix="/articles")

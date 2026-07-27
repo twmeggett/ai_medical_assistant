@@ -1,5 +1,6 @@
 from .tool_executor import tool_executor
 from .tool_schemas import (
+    search_article_chunks_schema,
     search_journals_schema,
     get_article_schema,
     cite_sources_schema,
@@ -8,6 +9,7 @@ from .tool_schemas import (
 
 __all__ = [
     "tool_executor",
+    "search_article_chunks_schema",
     "search_journals_schema",
     "get_article_schema",
     "cite_sources_schema",

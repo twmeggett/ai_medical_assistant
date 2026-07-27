@@ -54,12 +54,15 @@ CREATE TABLE article_chunks (
     section         TEXT          NOT NULL,
     chunk_index     INT           NOT NULL,
     token_count     INT           NOT NULL,
+    content_hash    TEXT          NOT NULL,  -- sha256(article_id + chunk_text); enforces idempotent re-ingestion
+    search_vector   TSVECTOR      GENERATED ALWAYS AS (to_tsvector('english', chunk_text)) STORED,
     metadata        JSONB,
 
-    UNIQUE (article_id, section, chunk_index)
+    UNIQUE (content_hash)
 );
 
 CREATE INDEX idx_article_chunks_embedding_hnsw ON article_chunks USING hnsw (embedding vector_ip_ops);
+CREATE INDEX idx_article_chunks_search_vector ON article_chunks USING gin (search_vector);
 
 -- Keep conversations.updated_at in sync whenever a message is added
 CREATE OR REPLACE FUNCTION fn_touch_conversation()

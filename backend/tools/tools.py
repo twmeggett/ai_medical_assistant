@@ -1,8 +1,38 @@
-from backend.models.tools import SearchJournalsInput, GetArticleInput, CiteSourcesInput
-from backend.models import ToolResultBlock
+from pydantic import TypeAdapter
+from backend.db.connector import get_pool
+from backend.models.tools import SearchArticleChunksInput, SearchJournalsInput, GetArticleInput, CiteSourcesInput
+from backend.models import ArticleChunk, ToolResultBlock
 from backend.models.domain import SearchResult
 from backend.utils.pubmed import esearch, efetch, esummary, format_citation
 
+_ARTICLE_CHUNKS_ADAPTER = TypeAdapter(list[ArticleChunk])
+
+
+async def search_article_chunks(tool_use_id: str, **kwargs) -> ToolResultBlock:
+    # Imported locally: backend.services imports backend.tools (for tool_executor),
+    # so a module-level import here would create a circular import.
+    from backend.services import search_article_chunks as search_chunks
+
+    params = SearchArticleChunksInput(**kwargs)
+    async with get_pool().acquire() as conn:
+        results = await search_chunks(
+            conn,
+            query=params.query,
+            top_k=params.top_k,
+            article_id=params.article_id,
+            section=params.section,
+        )
+
+    if not results:
+        return ToolResultBlock(
+            tool_use_id=tool_use_id,
+            content="No matching chunks found.",
+        )
+
+    return ToolResultBlock(
+        tool_use_id=tool_use_id,
+        content=_ARTICLE_CHUNKS_ADAPTER.dump_json(results).decode(),
+    )
 
 async def search_journals(tool_use_id: str, **kwargs) -> ToolResultBlock:
     params = SearchJournalsInput(**kwargs)

@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from backend.services import search_article_chunks
 from backend.db.connector import get_pool
 from backend.models import ArticleChunk
+from backend.models.tools import DEFAULT_CHUNK_SEARCH_TOP_K
 from backend.utils.embedding_helpers import embed_query
 
 router = APIRouter()
@@ -11,7 +12,7 @@ router = APIRouter()
 
 class SearchChunksRequest(BaseModel):
     query: str
-    top_k: int = 10
+    top_k: int = DEFAULT_CHUNK_SEARCH_TOP_K
     article_id: str | None = None
     section: str | None = None
 

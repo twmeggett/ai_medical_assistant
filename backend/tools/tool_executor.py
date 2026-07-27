@@ -1,6 +1,6 @@
 from pydantic import ValidationError
 from backend.models import ToolResultBlock
-from backend.tools.tools import search_journals, get_article, cite_sources
+from backend.tools.tools import search_article_chunks, search_journals, get_article, cite_sources
 from backend.utils.sanitize import strip_injection_patterns
 
 def wrap_tool_output(content: str, source: str = "tool") -> str:
@@ -13,6 +13,8 @@ def wrap_tool_output(content: str, source: str = "tool") -> str:
 async def tool_executor(tool_name: str, tool_use_id: str, raw_input: dict) -> ToolResultBlock:
     try:
         match tool_name:
+            case "search_article_chunks":
+                result = await search_article_chunks(tool_use_id, **raw_input)
             case "search_journals":
                 result = await search_journals(tool_use_id, **raw_input)
             case "get_article":

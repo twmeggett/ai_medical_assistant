@@ -37,6 +37,17 @@ CANDIDATE_POOL_SIZE = 25
 # Revisit once real usage queries or a larger labeled eval set exist.
 DEFAULT_MIN_RERANK_SCORE = 0.4
 
+# Minimum fraction of the top-scoring chunk's relevance_score a chunk must
+# reach to be kept, applied alongside (not instead of) DEFAULT_MIN_RERANK_SCORE.
+# The two catch different failure modes: the absolute floor guards against
+# "nothing in the corpus is actually relevant" (it can zero out the whole
+# result set), while this one tightens the tail once there IS a good match —
+# e.g. a specific query's 6th-best chunk can clear the absolute floor while
+# still belonging to a completely different article than the top 5. Note this
+# can never filter out a bad *top* result, since rank 1 is always 100% of
+# itself — that failure mode is what the absolute floor is for.
+DEFAULT_RERANK_RELATIVE_FACTOR = 0.7
+
 
 async def _collect_new_chunks(
     conn: asyncpg.Connection | asyncpg.pool.PoolConnectionProxy,
@@ -168,6 +179,7 @@ async def search_article_chunks(
     query: str,
     top_k: int = DEFAULT_CHUNK_SEARCH_TOP_K,
     min_score: float = DEFAULT_MIN_RERANK_SCORE,
+    relative_factor: float = DEFAULT_RERANK_RELATIVE_FACTOR,
     article_id: str | None = None,
     section: str | None = None
 ):
@@ -225,9 +237,22 @@ async def search_article_chunks(
     candidates = [chunks_by_id[fused_result["id"]] for fused_result in fused]
     reranked = rerank_chunks(query, [chunk.chunk_text for chunk in candidates], top_k=len(candidates))
 
+    if not reranked.results:
+        return []
+
+    # Two cutoffs catching different failure modes (see DEFAULT_MIN_RERANK_SCORE
+    # and DEFAULT_RERANK_RELATIVE_FACTOR): the absolute floor can reject every
+    # candidate when nothing is actually relevant; the relative floor — scaled
+    # to this query's own top score, since relevance_score isn't calibrated
+    # across queries — tightens the tail once there IS a good match, catching
+    # e.g. a 6th-best chunk from a different article than the top 5 that still
+    # clears the absolute floor on its own.
+    top_score = reranked.results[0].relevance_score
+    cutoff = max(min_score, top_score * relative_factor)
+
     results = []
     for reranked_result in reranked.results:
-        if reranked_result.relevance_score < min_score:
+        if reranked_result.relevance_score < cutoff:
             break  # sorted descending — nothing after this qualifies either
         chunk = candidates[reranked_result.index]
         chunk.score = reranked_result.relevance_score

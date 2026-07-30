@@ -5,12 +5,16 @@ from backend.utils.chat_helpers import add_user_message, add_assistant_message, 
 from backend.models import ToolResultBlock
 
 
+MAX_TOOL_ITERATIONS = 15
+
+
 async def run_conversation(
     messages: list[MessageParam],
     stream_fn: ChatStreamFn,
     on_assistant_message: Callable[[str], Awaitable[None]] | None = None,
+    max_iterations: int = MAX_TOOL_ITERATIONS,
 ) -> AsyncGenerator[str, None]:
-    while True:
+    for _ in range(max_iterations):
         if not messages or messages[-1].get("role") != "user":
             break
 
@@ -49,3 +53,5 @@ async def run_conversation(
                 messages = add_user_message(messages, [b.model_dump() for b in tool_result_blocks])
             else:
                 break
+    else:
+        yield "\n>>> Reached the maximum number of tool calls for this turn; stopping here."

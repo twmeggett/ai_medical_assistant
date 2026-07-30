@@ -18,9 +18,11 @@ from langchain_anthropic import ChatAnthropic
 from langchain_voyageai import VoyageAIEmbeddings
 from ragas import evaluate, EvaluationDataset, SingleTurnSample
 from ragas.llms import LangchainLLMWrapper
+from ragas.run_config import RunConfig
 from ragas.embeddings import LangchainEmbeddingsWrapper
 from ragas.metrics import Faithfulness, ContextPrecision, ContextRecall, ResponseRelevancy
 
+from backend.datasets.med_article_evals import EVAL_SET
 from backend.db.connector import connect, disconnect, get_pool
 from backend.services import search_article_chunks
 
@@ -29,13 +31,15 @@ GENERATION_MODEL = os.getenv("CLAUDE_SONNET_MODEL", "claude-sonnet-5")
 VOYAGE_MODEL = "voyage-3"
 TOP_K = 8
 
-llm = LangchainLLMWrapper(
-    ChatAnthropic(model=JUDGE_MODEL, api_key=os.environ["ANTHROPIC_API_KEY"])
-)
-embeddings = LangchainEmbeddingsWrapper(
-    VoyageAIEmbeddings(model=VOYAGE_MODEL, voyage_api_key=os.environ["VOYAGE_API_KEY"])
-)
-async_anthropic_client = AsyncAnthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+# ContextPrecision scores one retrieved chunk at a time via sequential judge
+# calls (not concurrent), so its per-job time scales with TOP_K — ragas'
+# default 180s RunConfig timeout isn't enough headroom for TOP_K=8 chunks
+# and was observed killing the job (silently scored as NaN) mid-run.
+EVAL_TIMEOUT_SECONDS = 600
+
+llm = LangchainLLMWrapper(ChatAnthropic(model=JUDGE_MODEL))
+embeddings = LangchainEmbeddingsWrapper(VoyageAIEmbeddings(model=VOYAGE_MODEL))
+async_anthropic_client = AsyncAnthropic()
 
 METRICS = [
     Faithfulness(llm=llm),
@@ -49,28 +53,6 @@ GENERATION_SYSTEM_PROMPT = (
     "excerpts from medical literature. If the excerpts don't contain enough "
     "information to answer, say so explicitly rather than guessing."
 )
-
-# (question, reference answer) grounded in ingested articles. Reference
-# answers are the ground truth ContextPrecision/ContextRecall are judged
-# against, so keep them accurate to what the source articles actually say.
-# Extend this as more articles are ingested.
-EVAL_SET = [
-    {
-        "question": (
-            "Does high-dose atorvastatin or moderate-dose rosuvastatin more "
-            "effectively reduce major adverse cardiovascular events in "
-            "patients with coronary artery disease?"
-        ),
-        "reference": (
-            "High-dose atorvastatin (80mg/day) significantly reduced MACE "
-            "compared with moderate-dose rosuvastatin (20mg/day) in patients "
-            "with established coronary artery disease — 9.4% vs 11.2% "
-            "(HR 0.83, 95% CI 0.72-0.95, p=0.007) — driven by lower rates of "
-            "non-fatal myocardial infarction. Atorvastatin also produced a "
-            "greater LDL-C reduction but more new-onset diabetes."
-        ),
-    },
-]
 
 
 async def generate_answer(question: str, contexts: list[str]) -> str:
@@ -114,7 +96,11 @@ async def run_eval():
     finally:
         await disconnect()
 
-    return evaluate(dataset=dataset, metrics=METRICS)
+    return evaluate(
+        dataset=dataset,
+        metrics=METRICS,
+        run_config=RunConfig(timeout=EVAL_TIMEOUT_SECONDS),
+    )
 
 
 if __name__ == "__main__":

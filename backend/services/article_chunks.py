@@ -22,10 +22,12 @@ logger = logging.getLogger(__name__)
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 50
 
-# Candidates fetched per retrieval method before RRF fusion + truncation to
-# the caller's requested top_k — wider than top_k so fusion has enough signal
-# from each side (a chunk only one method ranks highly still needs to appear
-# in its candidate pool to be found at all).
+# Candidates fetched per retrieval method before RRF fusion, and — reused
+# below — the cap on how many RRF-fused candidates advance to reranking.
+# Wider than top_k so fusion has enough signal from each side (a chunk only
+# one method ranks highly still needs to appear in its candidate pool to be
+# found at all), and bounds the cross-encoder call independent of how large
+# the vector+keyword union happens to be.
 CANDIDATE_POOL_SIZE = 25
 
 # Minimum Voyage rerank relevance_score for a chunk to be returned at all.
@@ -229,12 +231,12 @@ async def search_article_chunks(
     # to a shared candidate pool, then Voyage's rerank model scores each
     # (query, chunk) pair jointly for a much more precise final ranking than
     # RRF's rank-based fusion alone — too expensive to run over the full
-    # corpus, which is why it only sees the already-narrowed fused candidates.
-    # Reranks the whole pool (not capped to top_k) so the min_score filter
-    # below can't shrink the result just because a qualifying candidate
-    # happened to rank outside an early cutoff — scoring cost is the same
-    # either way, only how many results Voyage returns changes.
-    candidates = [chunks_by_id[fused_result["id"]] for fused_result in fused]
+    # corpus, which is why it only sees a bounded slice of the fused
+    # candidates. Takes the top CANDIDATE_POOL_SIZE by RRF score, widened to
+    # top_k if the caller asked for more results than that (so the min_score
+    # filter below still has enough candidates to fill the request from).
+    rerank_pool = fused[:max(top_k, CANDIDATE_POOL_SIZE)]
+    candidates = [chunks_by_id[fused_result["id"]] for fused_result in rerank_pool]
     reranked = rerank_chunks(query, [chunk.chunk_text for chunk in candidates], top_k=len(candidates))
 
     if not reranked.results:
